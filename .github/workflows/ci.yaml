@@ -48,3 +48,5 @@ jobs:
       # Step - 05 : Build image only after tests have passed
       - name: Build Docker Image
         run: docker build -t iris-ml-api:${{ github.sha }} .
+
+        

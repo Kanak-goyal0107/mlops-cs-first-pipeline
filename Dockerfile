@@ -4,11 +4,11 @@ FROM python:3.14-slim
 WORKDIR /app
 
 # Install Python dependencies
-COPY mlops-first-pipeline/requirements.txt ./requirements.txt
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application files into /app
-COPY mlops-first-pipeline/ .
+COPY . .
 
 # Copy model files if they are stored in the models folder
 # (the previous instruction copies the entire application folder)

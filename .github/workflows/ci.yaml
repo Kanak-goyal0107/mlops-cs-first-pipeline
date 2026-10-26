@@ -28,13 +28,13 @@ jobs:
     steps:
       # Step-1: Download the repo content to the runner
       - name: Check out repository
-      uses: actions/checkout@v4
+        uses: actions/checkout@v4
 
       #step -2: Install Python on runner
       - name: Install Python on Runner
-      uses: actions/setup-python@v5
-      with:
-        python-version: "3.14"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
       
       #step-3: Install the dependencies needed to run the tests
       - name: Install Python dependencies

@@ -17,7 +17,7 @@ on:
 
 #Permissions are restricted to reading repo content only
 permissions:
-  contents: reading
+  contents: read
 
 #Define the jobs that make up the pipeline
 jobs:

@@ -1,43 +1,76 @@
-
 from pathlib import Path
 import joblib
+from sklearn.datasets import load_iris
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+import mlflow
+import mlflow.sklearn
+import os
 
-# Create FastAPI application
-app = FastAPI(title="Iris Model API")
+app=FastAPI(title="Iris Model API")
 
-# Load the trained machine learning model
-model_path = Path("models/iris_model.joblib")
-model = joblib.load(model_path)
+# MLFlow Configuration
+MLFLOW_TRACKING_URI = os.getenv(
+    "MLFLOW_TRACKING_URI","http://127.0.0.1:6001"
+)
 
-# Define the input features for Iris prediction
+MODEL_URI = "models:/iris-classifier@champion"
+
+
+#Tell the MLFLOW client where the model registry lines
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+#model_path = Path("models/iris_model.joblib")
+#model = joblib.load(model_path)
+
+try:
+    model = mlflow.sklearn.load_model(MODEL_URI)
+    client = mlflow.MlflowClient()
+    champion_version = client.get_model_version_by_alias(
+        name="iris-classifier",
+        alias="champion"
+    )
+    model_version = champion_version.version
+    print(f"Loaded model: iris-classifier:{model_version}")
+except Exception as ex:
+    raise RuntimeError(
+        f"Could not load champion model from MLFlow: {ex}"
+    )
+
+
 class IrisRequest(BaseModel):
     sepal_length: float = Field(gt=0)
     sepal_width: float = Field(gt=0)
     petal_length: float = Field(gt=0)
     petal_width: float = Field(gt=0)
 
-# Health check endpoint
+@app.get("/")
+def health_check():
+    return {"message": "API is ready to serve..."}
+
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    return {"status": "healthy",
+    "model_name": "iris_classifier",
+    "model_version": model_version
+    }
 
-# Predict Iris flower species
+
 @app.post("/predict")
-def predict_iris(request: IrisRequest):
+def predict(data: IrisRequest):
     features = [[
-        request.sepal_length,
-        request.sepal_width,
-        request.petal_length,
-        request.petal_width
+        data.sepal_length,
+        data.sepal_width,
+        data.petal_length,
+        data.petal_width
     ]]
 
     prediction = int(model.predict(features)[0])
 
-    class_names = ["setosa", "versicolor", "virginica"]
-
     return {
         "prediction": prediction,
-        "class_name": class_names[prediction]
+        "class_name": ["setosa", "versicolor", "virginica"][prediction]
     }

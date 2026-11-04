@@ -2,14 +2,31 @@
 from fastapi.testclient import TestClient
 
 #Import application object defined in main.py 
-from main import app
-
-#Reusable test client for all test functions
-client = TestClient(app)
+from main2 import create_app
+import pytest
 
 
+class FakeIrisModel:
+    def predict(self, features):
+        # Always return class 0
+        return [0]
 
-def test_health_endpoint():
+def fake_model_loader():
+    return FakeIrisModel()
+
+def fake_version_loader():
+    return "test-version"
+
+@pytest.fixture    #This method makes the client objest which helps in testing
+def client():
+    app = create_app(
+        model_loader=fake_model_loader,
+        version_loader = fake_version_loader
+    )
+    with TestClient(app) as test_client:
+        yield test_client
+
+def test_health_endpoint(client):
     """
     Verify that application is running and can respond to a health check request.
     """
@@ -17,7 +34,7 @@ def test_health_endpoint():
     assert response.status_code == 200   #success code is 200I(assert for if the response is successful)
     assert response.json() == {"status": "healthy"} 
 
-def test_valid_iris_prediction():
+def test_valid_iris_prediction(client):
     """
     Verify that we are getting valid predictions 
     """
